@@ -14,6 +14,8 @@ class ViewController: NSViewController {
     var selectedURL: URL!
     var saveURL: URL!
     let savePathText: NSText = NSText()
+    var ignoreText: NSTextField = NSTextField()
+    var ignoreArray: [String] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,20 +27,30 @@ class ViewController: NSViewController {
         button.frame = NSRect(x: 10, y: self.view.frame.size.height - 30, width: 150, height: 30)
         self.view.addSubview(button)
 
-        fileSelectedText.frame = NSRect(x: button.frame.origin.x + button.frame.size.width + 10, y: self.view.frame.size.height - 20, width: self.view.frame.size.width - button.frame.size.width - 20, height: 20)
-        fileSelectedText.textColor = .white
+        fileSelectedText.frame = NSRect(x: button.frame.origin.x + button.frame.size.width + 10, y: self.view.frame.size.height - 20, width: self.view.frame.size.width - button.frame.size.width - 20, height: 30)
+        fileSelectedText.isEditable = false
         self.view.addSubview(fileSelectedText)
 
         let saveButton = NSButton(title: "保存路径", image: NSImage(), target: self, action: #selector(selectedSavePath))
         saveButton.frame = NSRect(x: 10, y:  button.frame.origin.y - button.frame.size.height - 10, width: 150, height: 30)
         self.view.addSubview(saveButton)
 
-        savePathText.frame = NSRect(x: button.frame.origin.x + button.frame.size.width + 10, y:  saveButton.frame.origin.y + 10, width: self.view.frame.size.width - button.frame.size.width - 20, height: 20)
-        savePathText.textColor = .white
+        savePathText.frame = NSRect(x: button.frame.origin.x + button.frame.size.width + 10, y:  saveButton.frame.origin.y + 10, width: self.view.frame.size.width - button.frame.size.width - 20, height: 30)
+        savePathText.isEditable = false
         self.view.addSubview(savePathText)
+        ignoreText.frame = CGRect(x: saveButton.frame.origin.x, y: saveButton.frame.origin.y - saveButton.frame.size.height - 10, width: self.view.frame.size.width - 20, height: 30)
+        ignoreText.placeholderString = "需要忽略的文件夹，多个以 , 隔开"
+        self.view.addSubview(ignoreText)
+
+        let tips = NSText()
+        tips.textColor = .red
+        tips.backgroundColor = .clear
+        tips.frame = CGRect(x: button.frame.origin.x, y: ignoreText.frame.origin.y - ignoreText.frame.size.height + 10, width: ignoreText.frame.size.width, height: 30)
+        tips.string = "自动忽略对Pods文件夹下图片的筛选"
+        self.view.addSubview(tips)
 
         let submitButton = NSButton(title: "确认筛选", target: self, action: #selector(submitButtonClickAction))
-        submitButton.frame = CGRect(x: button.frame.origin.x, y: saveButton.frame.origin.y - saveButton.frame.size.height - 10, width: 150, height: 30)
+        submitButton.frame = CGRect(x: button.frame.origin.x, y: tips.frame.origin.y - tips.frame.size.height - 20, width: 150, height: 30)
         self.view.addSubview(submitButton)
     }
 
@@ -79,6 +91,10 @@ class ViewController: NSViewController {
             return
         }
         imageDic.removeAll()
+        ignoreArray.removeAll()
+        if ignoreText.stringValue.count > 0 {
+            ignoreArray = ignoreText.stringValue.components(separatedBy: ",")
+        }
         let fileArray: [String] = FileManager.default.subpaths(atPath: selectedURL.relativePath) ?? []
         if fileArray.count <= 0 {
             return
@@ -119,6 +135,13 @@ class ViewController: NSViewController {
         var isDir: ObjCBool = ObjCBool(false)
         if path.relativePath.contains("/Pods/") || path.relativePath.contains("/SAKShare/"){
             return
+        }
+        if ignoreArray.count > 0 {
+            for item in ignoreArray {
+                if path.relativePath.contains("/\(item)/") {
+                    return
+                }
+            }
         }
         let isExist = fileManger.fileExists(atPath: path.relativePath, isDirectory: &isDir)
         if !isExist {

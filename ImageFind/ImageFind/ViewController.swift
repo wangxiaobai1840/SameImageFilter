@@ -114,7 +114,7 @@ class ViewController: NSViewController {
         let jsonString = jsonToString(jsonDic: dic)
         try? jsonString?.write(toFile: saveURL.relativePath + "/filter.txt", atomically: true, encoding: .utf8)
         let alert = NSAlert()
-        alert.messageText = "已筛选完成"
+        alert.messageText = "已筛选完成\(dic.keys.count)项重复，\(dic.values.count) 张图片"
         alert.alertStyle = .informational
         alert.runModal()
     }
